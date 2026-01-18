@@ -45,3 +45,37 @@ export function overlay({
         }
     });
 }
+
+export function paint({
+    brushVolume,
+    minVertex,
+    targetBlock,
+    targetPosition,
+    shape,
+    placedBlock
+}) {
+    helper.shapes[shape]({
+        brushVolume,
+        minVertex,
+        targetBlock,
+        targetPosition,
+        process: (minVertex, i, k, j, state) => {
+            let checkedBlock;
+
+            checkedBlock = minVertex.offset({
+                x: i,
+                y: k,
+                z: j
+            });
+
+            if (checkedBlock.typeId == "minecraft:air") return;
+            state.affectedBlocks.push(checkedBlock);
+        },
+        outSideProcess: (minVertex, state) => {
+            for (let affectedBlock of state.affectedBlocks) {
+                affectedBlock.setType(placedBlock);
+            }
+            state.affectedBlocks = [];
+        }
+    });
+}

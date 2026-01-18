@@ -7,9 +7,6 @@ import * as normalBrush from "./brushes/normal.js";
 import * as erosionBrush from "./brushes/erosion.js";
 import * as overlayBrush from "./brushes/overlay.js";
 
-//temporary
-import * as helper from "./helper.js";
-
 console.warn("Working");
 
 let overworld;
@@ -42,7 +39,8 @@ const brush = {
             lift: "__brush.mode.erosion.lift",
             smooth: "__brush.mode.erosion.smooth"
         },
-        overlay: "__brush.mode.overlay"
+        overlay: "__brush.mode.overlay",
+        paint: "__brush.mode.paint"
     },
     slot: "__brush.slot"
 };
@@ -83,6 +81,12 @@ world.beforeEvents.itemUse.subscribe((eventData) => {
             placedBlock = placedBlock.typeId;
         else
             placedBlock = "minecraft:stone";
+
+        if (placedBlock == "minecraft:water_bucket")
+            placedBlock = "minecraft:water";
+
+        if (placedBlock == "minecraft:lava_bucket")
+            placedBlock = "minecraft:lava";
 
 
 
@@ -168,27 +172,6 @@ world.beforeEvents.itemUse.subscribe((eventData) => {
                         shape: shape
                     });
                 }
-                if (player.hasTag(brush.mode.erosion.smooth)) {
-                    erosionBrush.smooth({
-                        brushVolume: brushVolume,
-                        minVertex: minVertex,
-                        targetBlock: targetBlock,
-                        targetPosition: targetPosition,
-                        shape: shape
-                    });
-                }
-
-                if (player.hasTag(brush.mode.overlay)) {
-                    overlayBrush.overlay({
-                        brushVolume,
-                        minVertex,
-                        targetBlock,
-                        targetPosition,
-                        shape,
-                        depth,
-                        placedBlock
-                    });
-                }
             });
         }
 
@@ -213,30 +196,44 @@ world.beforeEvents.itemUse.subscribe((eventData) => {
                         shape: shape
                     });
                 }
-                if (player.hasTag(brush.mode.erosion.smooth)) {
-                    erosionBrush.smooth({
-                        brushVolume: brushVolume,
-                        minVertex: minVertex,
-                        targetBlock: targetBlock,
-                        targetPosition: targetPosition,
-                        shape: shape
-                    });
-                }
 
-                if (player.hasTag(brush.mode.overlay)) {
-                    overlayBrush.overlay({
-                        brushVolume,
-                        minVertex,
-                        targetBlock,
-                        targetPosition,
-                        shape,
-                        depth,
-                        placedBlock
-                    });
-                }
             });
         }
         system.run(() => {
+            //Applies to both
+            if (player.hasTag(brush.mode.erosion.smooth)) {
+                erosionBrush.smooth({
+                    brushVolume: brushVolume,
+                    minVertex: minVertex,
+                    targetBlock: targetBlock,
+                    targetPosition: targetPosition,
+                    shape: shape
+                });
+            }
+
+            if (player.hasTag(brush.mode.overlay)) {
+                overlayBrush.overlay({
+                    brushVolume,
+                    minVertex,
+                    targetBlock,
+                    targetPosition,
+                    shape,
+                    depth,
+                    placedBlock
+                });
+            }
+
+            if (player.hasTag(brush.mode.paint)) {
+                overlayBrush.paint({
+                    brushVolume,
+                    minVertex,
+                    targetBlock,
+                    targetPosition,
+                    shape,
+                    placedBlock
+                });
+            }
+
             //Normal
             if (player.hasTag(brush.mode.normal)) {
                 normalBrush.normalBrush({
@@ -314,7 +311,9 @@ function matchCommand(cmd, sender) {
                 }
                 case "sz":
                 case "size": {
-                    if (Number.isFinite(Number(cmd[2])) && Number.isFinite(Number(cmd[3]))) {
+                    if (Number.isInteger(Number(cmd[2])) || (Number.isInteger(Number(cmd[2])) && Number.isInteger(Number(cmd[3])))) {
+                        if (!cmd[3])
+                            cmd[3] = 1;
                         let width = Number(cmd[2]), height = Number(cmd[3]);
                         world.scoreboard.getObjective(brush.size.width).setScore(sender, width);
                         world.scoreboard.getObjective(brush.size.height).setScore(sender, height);
@@ -380,6 +379,11 @@ function matchCommand(cmd, sender) {
                             }
                             break;
                         }
+                        case "p":
+                        case "paint":
+                            sender.addTag(brush.mode.paint);
+                            brushModeName = "paint";
+                            break;
                     }
                     sender.runCommand(`tellraw @s {"rawtext":[{"text":"Updated brush shape to ${brushModeName}."}]}`);
                     break;
