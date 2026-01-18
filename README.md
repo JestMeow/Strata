@@ -8,7 +8,7 @@ An addon for Minecraft: Bedrock Edition that helps you build large organic shape
 - Melt, fill, and smooth areas
 
 # Installation
-1. Download the latest release or the addon version that supports your Minecraft version.
+1. Download the [latest release](https://github.com/JestMeow/Strata/releases) or the addon version that supports your Minecraft version.
 2. Import the `.mcaddon` file.
 3. Activate the behaviour pack in your world.
 4. Enable beta API experimental feature.
